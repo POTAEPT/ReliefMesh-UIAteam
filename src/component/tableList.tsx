@@ -1,69 +1,97 @@
+import { useState } from 'react'
+import QRCode from 'react-qr-code'
+import { initializeReclaimSession } from '../service/reclaimService'
 
-import { ReclaimProofRequest } from '@reclaimprotocol/js-sdk';
-import QRCode from 'react-qr-code';
-import React, { Component } from 'react';
-import './App.css'
-import './tableList.css'; // นำเข้าไฟล์ CSS ที่แยกไว้
-
-// Interface สำหรับข้อมูล User
-export interface VerifiedUser {
-  id: number;
-  name: string;
-  timestamp: string;
-}
-
-// Interface สำหรับ Props ที่รับเข้ามา
-interface Props {
-  data: VerifiedUser[];
-}
-
-class VerificationTable extends Component<Props> {
+export const GitHubVerifier = () => {
+  const [requestUrl, setRequestUrl] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
   
-  render() {
-    const { data } = this.props;
+  const [proofData, setProofData] = useState<any>(null) 
 
-    // --- LOGIC: เช็คความว่างเปล่า ---
-    // ถ้าไม่มีข้อมูล หรือ Array ว่างเปล่า ให้ return null (ไม่แสดงอะไรเลยที่หน้าจอ)
-    if (!data || data.length === 0) {
-      return null;
+  const onVerifyClick = async () => {
+    setIsLoading(true)
+    setRequestUrl('')
+    setProofData(null) // เคลียร์ข้อมูลเก่าก่อนเริ่มใหม่
+
+    try {
+      const url = await initializeReclaimSession(
+        (proofs) => {
+          console.log('Verification Success:', proofs)
+          
+          if (proofs) {
+            setProofData(proofs[0]) 
+          }
+        },
+        (error) => {
+          console.error('Verification Failed:', error)
+          alert('เกิดข้อผิดพลาดในการยืนยันตัวตน')
+        }
+      )
+
+      setRequestUrl(url)
+
+    } catch (error) {
+      console.error("Error calling service:", error)
+    } finally {
+      setIsLoading(false)
     }
-
-    // --- ถ้ามีข้อมูลแล้ว ให้แสดงผลโดยใช้ Class จากไฟล์ CSS ---
-    return (
-      <div className="vt-container">
-        
-        {/* Header ส่วนบน */}
-        <div className="vt-header">
-          <h3 className="vt-title">✅ Verified Users</h3>
-          <span className="vt-badge">{data.length} คน</span>
-        </div>
-
-        {/* ตารางข้อมูล */}
-        <div className="vt-table-wrapper">
-          <table className="vt-table">
-            <thead>
-              <tr>
-                <th className="vt-th">User Name</th>
-                <th className="vt-th" style={{ textAlign: 'right' }}>Time</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.map((user) => (
-                <tr key={user.id} className="vt-row">
-                  <td className="vt-cell-name">
-                    {user.name}
-                  </td>
-                  <td className="vt-cell-time">
-                    {user.timestamp}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    );
   }
+
+  return (
+    <div className="verifier-container" style={{ padding: '20px', textAlign: 'center', maxWidth: '600px', margin: '0 auto' }}>
+      
+      <h3>GitHub Owner Verification</h3>
+
+      <button onClick={onVerifyClick} disabled={isLoading} style={{ padding: '10px 20px', cursor: 'pointer' }}>
+        {isLoading ? 'กำลังเชื่อมต่อ...' : 'Verify GitHub Owner'}
+      </button>
+
+      {requestUrl && !proofData && (
+        <div style={{ marginTop: '20px' }}>
+          <div style={{ background: 'white', padding: '16px', display: 'inline-block', borderRadius: '8px', border: '1px solid #ddd' }}>
+            <QRCode value={requestUrl} />
+          </div>
+          <p>สแกนด้วย Reclaim App บนมือถือ</p>
+        </div>
+      )}
+
+
+      {proofData && (
+        <div style={{ 
+          marginTop: '30px', 
+          textAlign: 'left', 
+          border: '1px solid #28a745', 
+          borderRadius: '10px', 
+          padding: '20px',
+          background: '#f0fff4'
+        }}>
+          <h2 style={{ color: '#28a745', marginTop: 0 }}>✅ ยืนยันตัวตนสำเร็จ!</h2>
+          
+          {/* ส่วนดึงค่ามาโชว์แบบสวยๆ */}
+          <div style={{ marginBottom: '15px' }}>
+            <strong>Provider:</strong> {proofData.claimData.provider} <br/>
+            <strong>Timestamp:</strong> {new Date(proofData.claimData.timestampS * 1000).toLocaleString()} <br/>
+          </div>
+
+          <hr/>
+
+          {/* ส่วนโชว์ JSON ดิบๆ (สำหรับ Developer / DWeb) */}
+          <p style={{ fontSize: '12px', color: '#666' }}>Raw Data for DWeb:</p>
+          <pre style={{ 
+            background: '#333', 
+            color: '#fff', 
+            padding: '10px', 
+            borderRadius: '5px', 
+            overflowX: 'auto',
+            fontSize: '11px'
+          }}>
+            {JSON.stringify(proofData, null, 2)}
+          </pre>
+        </div>
+      )}
+      
+    </div>
+  )
 }
 
-export default VerificationTable;
+export default GitHubVerifier
