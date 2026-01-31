@@ -70,24 +70,28 @@ export const GitHubVerifierLogic = () => {
   }, [])
 
   return (
-    <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '20px' }}>
+    <div >
       <h1 style={{ textAlign: 'center', marginBottom: '30px' }}>Github Kiosk System</h1>
       
       {/* จัด Layout 2 คอลัมน์ */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px' }}>
+      <div className='column-all' style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px' }} >
         
+        <div className='column-QR'>
         {/* เพื่อนคนที่ 1 (QRCode) */}
         <QRCodeView 
           url={qrUrl} 
           isLoading={isLoading} 
           onManualRefresh={startSession} 
         />
-
+        </div>
+        
+        <div className='column-table'>
         {/* เพื่อนคนที่ 2 (History List) */}
         <HistoryListView 
           history={history} 
           onClear={() => setHistory([])} 
         />
+        </div>
 
       </div>
     </div>
