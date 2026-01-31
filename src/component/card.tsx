@@ -14,7 +14,7 @@ export const QRCodeView = ({ url, isLoading, onManualRefresh }: QRCodeProps) => 
 
   return (
     // --- พื้นที่แก้ Design ตรงนี้ ---
-    <div style={{ padding: '20px', textAlign: 'center', border: '1px solid #09637E', height: '380px' }}>
+    <div style={{ padding: '20px', textAlign: 'center', border: '1px solid #ffffff', height: '380px' }}>
       
       <h2>สแกน QR Code ตรงนี้</h2>
 

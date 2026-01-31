@@ -29,7 +29,7 @@ export const HistoryListView = ({ history, onClear }: HistoryListProps) => {
 
   return (
     // --- พื้นที่แก้ Design  ---
-    <div className='card' style={{ border: '1px solid #09637E', padding: '10px', height: '400px' }}>
+    <div className='card' style={{ border: '1px solid #ffffff', padding: '10px', height: '400px' }}>
       
       <div className='table-list'style={{ display: 'flex', justifyContent: 'space-between' }}>
          <h3>รายชื่อคนที่สแกนแล้ว ({history.length})</h3>
@@ -42,7 +42,7 @@ export const HistoryListView = ({ history, onClear }: HistoryListProps) => {
         {/* (ห้ามลบ .map) */}
         {history.map((user, index) => (
           
-          <li key={index} style={{ marginBottom: '10px', background: '#eee' }}>
+          <li key={index} style={{ marginBottom: '10px', background: '#088395' }}>
              <strong>{user.username}</strong> <br/>
              <span>Repo: {user.repo}</span> <br/>
              <small>{user.time}</small>
