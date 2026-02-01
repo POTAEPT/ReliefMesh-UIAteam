@@ -1,6 +1,8 @@
-import React from 'react';
+// src/components/DonationDetailView.tsx
+import React, { useState } from 'react';
 import { type EmergencyRequest } from '../App';
-import { ArrowLeft, MapPin, Clock, AlertCircle, Wallet } from 'lucide-react';
+import { ArrowLeft, MapPin, Clock, AlertCircle, Wallet, Loader2, CheckCircle, ExternalLink } from 'lucide-react';
+import { ethers } from 'ethers'; // พระเอกของเรา
 import styles from '../styles/DonationDetail.module.css';
 
 // 1. เพิ่ม Import สำหรับแผนที่ (Leaflet)
@@ -32,9 +34,51 @@ const createCustomIcon = () => {
 };
 
 export const DonationDetailView: React.FC<DonationDetailViewProps> = ({ request, onBack }) => {
-  const handleConnectWallet = () => {
-    console.log('Connect wallet initiated');
-    alert('Wallet connection would be initiated here. In production, this would integrate with Web3 wallet providers.');
+  const [status, setStatus] = useState<'idle' | 'processing' | 'success' | 'error'>('idle');
+  const [txHash, setTxHash] = useState<string>('');
+  const [errorMessage, setErrorMessage] = useState<string>('');
+
+  const handleDonate = async () => {
+    setStatus('processing');
+    setErrorMessage('');
+
+    try {
+      // 1. เช็คว่ามี MetaMask ไหม
+      if (!window.ethereum) {
+        throw new Error("ไม่พบ MetaMask กรุณาติดตั้ง Wallet");
+      }
+
+      // 2. เชื่อมต่อกระเป๋า
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      await provider.send("eth_requestAccounts", []); // ขอ Permission
+      const signer = await provider.getSigner();
+
+      // 3. เตรียม Transaction (Demo โอน 0.001 ETH)
+      // *ในงานจริง Address ผู้รับควรมาจาก request.walletAddress*
+      // *อันนี้ใส่ Address กลางไว้เทสก่อน*
+      const recipientAddress = "0x71C7656EC7ab88b098defB751B7401B5f6d8976F"; 
+      
+      console.log(`Initiating donation to ${recipientAddress}...`);
+      
+      const tx = await signer.sendTransaction({
+        to: recipientAddress,
+        value: ethers.parseEther("0.001") // จำนวนเงิน
+      });
+
+      console.log("Tx Sent:", tx.hash);
+      setTxHash(tx.hash);
+      setStatus('success');
+
+    } catch (error: any) {
+      console.error("Donation failed:", error);
+      setStatus('error');
+      // แปลง Error ให้อ่านง่าย
+      if (error.code === 'ACTION_REJECTED') {
+        setErrorMessage("ยกเลิกรายการ");
+      } else {
+        setErrorMessage(error.message || "เกิดข้อผิดพลาดในการโอน");
+      }
+    }
   };
 
   // พิกัดของเคสปัจจุบัน
@@ -44,50 +88,26 @@ export const DonationDetailView: React.FC<DonationDetailViewProps> = ({ request,
     <div className={styles.detailView}>
       {/* Header */}
       <header className={styles.header}>
-        <button 
-          className={styles.backButton}
-          onClick={onBack}
-          aria-label="Go back"
-        >
+        <button className={styles.backButton} onClick={onBack}>
           <ArrowLeft size={24} color="#1F2937" />
         </button>
-        <h1 className={styles.headerTitle}>Request Details</h1>
+        <h1 className={styles.headerTitle}>Help & Donate</h1>
         <div className={styles.headerSpacer}></div>
       </header>
 
-      {/* Content Container */}
       <div className={styles.contentContainer}>
-        
-        {/* 3. ส่วนแผนที่ (แก้จากกล่องสีม่วงเดิม เป็นแผนที่จริง) */}
-        <div className={styles.mapSnippet} style={{ background: '#E5E7EB' }}>
-          <LeafletMap 
-            center={position} 
-            zoom={15} 
-            style={{ height: '100%', width: '100%', zIndex: 0 }}
-            zoomControl={false}
-            scrollWheelZoom={false} // ปิดการเลื่อนเมาส์เพื่อซูม (กัน user รำคาญเวลาเลื่อนหน้าจอ)
-            dragging={true}
-          >
-            <TileLayer
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            />
-            <Marker 
-              position={position} 
-              icon={createCustomIcon()}
-            />
-          </LeafletMap>
+        {/* Map Placeholder */}
+        <div className={styles.mapSnippet}>
+          <div className={styles.mapPlaceholder}>
+            <MapPin size={48} color="#E63946" />
+            <span className={styles.mapLabel}>{request.location.address}</span>
+          </div>
         </div>
 
-        {/* Request Card */}
         <div className={styles.requestCard}>
-          {/* User Section */}
+          {/* User Info */}
           <div className={styles.userSection}>
-            <img 
-              src={request.userAvatar} 
-              alt={request.userName}
-              className={styles.userAvatar}
-            />
+            <img src={request.userAvatar} alt={request.userName} className={styles.userAvatar} />
             <div className={styles.userDetails}>
               <h2 className={styles.userName}>{request.userName}</h2>
               <div className={styles.userMeta}>
@@ -95,21 +115,9 @@ export const DonationDetailView: React.FC<DonationDetailViewProps> = ({ request,
                   <Clock size={16} color="#6B7280" />
                   <span className={styles.metaText}>{request.timestamp}</span>
                 </div>
-                <div className={styles.metaItem}>
-                  <MapPin size={16} color="#E63946" />
-                  <span className={styles.metaText}>{request.proximity}</span>
-                </div>
               </div>
             </div>
           </div>
-
-          {/* Urgency Banner */}
-          {request.urgencyLevel === 'critical' && (
-            <div className={styles.urgencyBanner}>
-              <AlertCircle size={20} color="#991B1B" />
-              <span className={styles.urgencyText} style={{ color: '#991B1B' }}>CRITICAL EMERGENCY</span>
-            </div>
-          )}
 
           {/* Description */}
           <div className={styles.section}>
@@ -117,48 +125,75 @@ export const DonationDetailView: React.FC<DonationDetailViewProps> = ({ request,
             <p className={styles.description}>{request.description}</p>
           </div>
 
-          {/* Needs Section */}
+          {/* Needs */}
           <div className={styles.section}>
-            <h3 className={styles.sectionTitle}>Immediate Needs</h3>
+            <h3 className={styles.sectionTitle}>Needs</h3>
             <div className={styles.needsGrid}>
               {request.needs.map((need, index) => (
                 <div key={index} className={styles.needItem}>
-                  <div className={styles.needIcon}>
-                    <AlertCircle size={20} color="#E63946" />
-                  </div>
+                  <AlertCircle size={16} color="#E63946" />
                   <span className={styles.needText}>{need}</span>
                 </div>
               ))}
             </div>
           </div>
-
-          {/* Location Details */}
-          <div className={styles.section}>
-            <h3 className={styles.sectionTitle}>Location</h3>
-            <div className={styles.locationCard}>
-              <MapPin size={20} color="#E63946" />
-              <div className={styles.locationInfo}>
-                <span className={styles.locationAddress}>{request.location.address}</span>
-                <span className={styles.locationCoords}>
-                  {request.location.lat.toFixed(4)}, {request.location.lng.toFixed(4)}
-                </span>
-              </div>
-            </div>
-          </div>
         </div>
 
-        {/* Action Section */}
+        {/* Action Section: ส่วนบริจาค */}
         <div className={styles.actionSection}>
-          <button 
-            className={styles.donateButton}
-            onClick={handleConnectWallet}
-          >
-            <Wallet size={22} color="#FFFFFF" />
-            <span>Connect Wallet to Donate</span>
-          </button>
-          <p className={styles.actionNote}>
-            Your donation will be sent directly to help this emergency request
-          </p>
+          {status === 'success' ? (
+            // Success State
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
+              <CheckCircle className="mx-auto mb-2 text-green-500" size={32} />
+              <h3 className="text-green-800 font-bold mb-1">Donation Sent!</h3>
+              <p className="text-green-600 text-sm mb-3">Thank you for your help.</p>
+              <a 
+                href={`https://sepolia.etherscan.io/tx/${txHash}`}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center justify-center gap-1 text-green-600 underline text-sm"
+              >
+                View on Etherscan <ExternalLink size={14} />
+              </a>
+              <button 
+                onClick={onBack}
+                className="mt-4 w-full py-2 bg-white border border-green-500 text-green-600 rounded-lg font-medium"
+              >
+                Back to Map
+              </button>
+            </div>
+          ) : (
+            // Normal / Processing State
+            <>
+              {status === 'error' && (
+                <div className="bg-red-50 text-red-600 p-2 rounded mb-3 text-sm text-center">
+                  {errorMessage}
+                </div>
+              )}
+              
+              <button 
+                className={styles.donateButton}
+                onClick={handleDonate}
+                disabled={status === 'processing'}
+                style={{ opacity: status === 'processing' ? 0.7 : 1 }}
+              >
+                {status === 'processing' ? (
+                  <>
+                    <Loader2 size={22} className="animate-spin mr-2" />
+                    <span>Processing...</span>
+                  </>
+                ) : (
+                  <>
+                    <Wallet size={22} color="#FFFFFF" className="mr-2" />
+                    <span>Donate 0.001 ETH</span>
+                  </>
+                )}
+              </button>
+              <p className={styles.actionNote}>
+                Direct blockchain transfer (No Platform Fees)
+              </p>
+            </>
+          )}
         </div>
       </div>
     </div>
