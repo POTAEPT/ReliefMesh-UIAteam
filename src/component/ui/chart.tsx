@@ -103,10 +103,10 @@ ${colorConfig
 
 const ChartTooltip = RechartsPrimitive.Tooltip;
 
-
+// สร้าง Interface แยกเพื่อให้ TypeScript มั่นใจว่ามี properties เหล่านี้แน่นอน
 interface ChartTooltipContentProps extends React.ComponentProps<"div"> {
   active?: boolean;
-  payload?: any[]; 
+  payload?: any[]; // ใช้ any[] เพื่อแก้ปัญหา Type Mismatch กับ Recharts
   label?: any;
   hideLabel?: boolean;
   hideIndicator?: boolean;
@@ -267,7 +267,7 @@ ChartTooltipContent.displayName = "ChartTooltipContent";
 
 const ChartLegend = RechartsPrimitive.Legend;
 
-
+// สร้าง Interface สำหรับ LegendProps โดยเฉพาะ
 interface ChartLegendContentProps extends React.ComponentProps<"div"> {
   payload?: any[];
   verticalAlign?: "top" | "middle" | "bottom";

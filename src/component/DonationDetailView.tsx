@@ -111,8 +111,8 @@ export const DonationDetailView: React.FC<DonationDetailViewProps> = ({ request,
           {/* Urgency Banner */}
           {request.urgencyLevel === 'critical' && (
             <div className={styles.urgencyBanner}>
-              <AlertCircle size={20} color="#000000" />
-              <span className={styles.urgencyText} style={{ color: '#000000' }}>CRITICAL EMERGENCY</span>
+              <AlertCircle size={20} color="#991B1B" />
+              <span className={styles.urgencyText} style={{ color: '#991B1B' }}>CRITICAL EMERGENCY</span>
             </div>
           )}
 
