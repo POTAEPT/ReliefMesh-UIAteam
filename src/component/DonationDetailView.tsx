@@ -1,17 +1,19 @@
-import React from 'react';
+import React, { useState } from 'react'; // <--- เพิ่ม useState
 import { type EmergencyRequest } from '../App';
-import { ArrowLeft, MapPin, Clock, AlertCircle, Wallet } from 'lucide-react';
+import { ArrowLeft, MapPin, Clock, AlertCircle, Wallet, CheckCircle } from 'lucide-react';
 import styles from '../styles/DonationDetail.module.css';
-import { 
-  ChevronLeft, MapPin, Clock, AlertTriangle, 
-  Droplets, Utensils, Stethoscope, Zap, HeartHandshake 
-} from 'lucide-react';
+
+// 1. เพิ่ม Import สำหรับแผนที่ (Leaflet)
+import { MapContainer as LeafletMap, TileLayer, Marker } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
+import mapStyles from '../styles/MapContainer.module.css'; // เรียกใช้ Style ของ Pin จากไฟล์ MapContainer
 
 interface DonationDetailViewProps {
   onBack: () => void;
 }
 
-// 2. ฟังก์ชันสร้าง Icon (Custom Pin)
+// Custom Pin Icon
 const createCustomIcon = () => {
   return new L.DivIcon({
     className: '', 
@@ -34,65 +36,43 @@ export const DonationDetailView: React.FC<DonationDetailViewProps> = ({ request,
     alert('Wallet connection would be initiated here. In production, this would integrate with Web3 wallet providers.');
   };
 
-  const getNeedIcon = (need: string) => {
-    switch (need.toLowerCase()) {
-      case 'water': return <Droplets size={20} color="#3B82F6" />;
-      case 'food': return <Utensils size={20} color="#F59E0B" />;
-      case 'first aid': return <Stethoscope size={20} color="#EF4444" />;
-      case 'generator': return <Zap size={20} color="#EAB308" />;
-      default: return <AlertTriangle size={20} color="#6B7280" />;
-    }
-  };
+  // พิกัดของเคสปัจจุบัน
+  const position: [number, number] = [request.location.lat, request.location.lng];
 
   return (
     <div className={styles.detailView}>
-      {/* Header */}
       <header className={styles.header}>
-        <button 
-          className={styles.backButton}
-          onClick={onBack}
-          aria-label="Go back"
-        >
+        <button className={styles.backButton} onClick={onBack}>
           <ArrowLeft size={24} color="#1F2937" />
         </button>
         <h1 className={styles.headerTitle}>Request Details</h1>
         <div className={styles.headerSpacer}></div>
       </header>
 
-      {/* Content Container */}
       <div className={styles.contentContainer}>
-        
-        {/* 3. ส่วนแผนที่ (แก้จากกล่องสีม่วงเดิม เป็นแผนที่จริง) */}
+        {/* Map Section */}
         <div className={styles.mapSnippet} style={{ background: '#E5E7EB' }}>
           <LeafletMap 
             center={position} 
             zoom={15} 
             style={{ height: '100%', width: '100%', zIndex: 0 }}
             zoomControl={false}
-            scrollWheelZoom={false} // ปิดการเลื่อนเมาส์เพื่อซูม (กัน user รำคาญเวลาเลื่อนหน้าจอ)
+            scrollWheelZoom={false}
             dragging={true}
           >
             <TileLayer
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+              attribution='&copy; OpenStreetMap'
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
-            <Marker 
-              position={position} 
-              icon={createCustomIcon()}
-            />
+            <Marker position={position} icon={createCustomIcon()} />
           </LeafletMap>
         </div>
       </div>
 
-        {/* Request Card */}
+        {/* Info Card */}
         <div className={styles.requestCard}>
-          {/* User Section */}
           <div className={styles.userSection}>
-            <img 
-              src={request.userAvatar} 
-              alt={request.userName}
-              className={styles.userAvatar}
-            />
+            <img src={request.userAvatar} alt={request.userName} className={styles.userAvatar} />
             <div className={styles.userDetails}>
               <h2 className={styles.userName}>{request.userName}</h2>
               <div className={styles.userMeta}>
@@ -100,15 +80,10 @@ export const DonationDetailView: React.FC<DonationDetailViewProps> = ({ request,
                   <Clock size={16} color="#6B7280" />
                   <span className={styles.metaText}>{request.timestamp}</span>
                 </div>
-                <div className={styles.metaItem}>
-                  <MapPin size={16} color="#E63946" />
-                  <span className={styles.metaText}>{request.proximity}</span>
-                </div>
               </div>
             </div>
           </div>
 
-          {/* Urgency Banner */}
           {request.urgencyLevel === 'critical' && (
             <div className={styles.urgencyBanner}>
               <AlertCircle size={20} color="#991B1B" />
@@ -116,13 +91,11 @@ export const DonationDetailView: React.FC<DonationDetailViewProps> = ({ request,
             </div>
           )}
 
-          {/* Description */}
           <div className={styles.section}>
             <h3 className={styles.sectionTitle}>Situation</h3>
             <p className={styles.description}>{request.description}</p>
           </div>
 
-          {/* Needs Section */}
           <div className={styles.section}>
             <h3 className={styles.sectionTitle}>Immediate Needs</h3>
             <div className={styles.needsGrid}>
@@ -137,32 +110,47 @@ export const DonationDetailView: React.FC<DonationDetailViewProps> = ({ request,
             </div>
           </div>
 
-          {/* Location Details */}
           <div className={styles.section}>
             <h3 className={styles.sectionTitle}>Location</h3>
             <div className={styles.locationCard}>
               <MapPin size={20} color="#E63946" />
               <div className={styles.locationInfo}>
                 <span className={styles.locationAddress}>{request.location.address}</span>
-                <span className={styles.locationCoords}>
-                  {request.location.lat.toFixed(4)}, {request.location.lng.toFixed(4)}
-                </span>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Action Section */}
+        {/* Action Section: ปุ่มเปลี่ยนตามสถานะ */}
         <div className={styles.actionSection}>
-          <button 
-            className={styles.donateButton}
-            onClick={handleConnectWallet}
-          >
-            <Wallet size={22} color="#FFFFFF" />
-            <span>Connect Wallet to Donate</span>
-          </button>
+          {status === 'success' ? (
+            <div style={{ textAlign: 'center', color: 'green', padding: '10px' }}>
+              <CheckCircle size={48} style={{ margin: '0 auto 10px' }} />
+              <h3>Donation Successful!</h3>
+              <p>Tx Hash: {txHash.slice(0, 6)}...{txHash.slice(-4)}</p>
+            </div>
+          ) : (
+            <button 
+              className={styles.donateButton}
+              onClick={handleAction}
+              disabled={status === 'connecting' || status === 'donating'}
+              style={{
+                backgroundColor: walletAddress ? '#10B981' : '#DC2626', // เขียวถ้าต่อแล้ว, แดงถ้ายัง
+              }}
+            >
+              <Wallet size={22} color="#FFFFFF" />
+              <span>
+                {status === 'connecting' ? 'Connecting...' :
+                 status === 'donating' ? 'Processing...' :
+                 walletAddress ? 'Donate 0.001 ETH' : 'Connect Wallet to Donate'}
+              </span>
+            </button>
+          )}
+          
           <p className={styles.actionNote}>
-            Your donation will be sent directly to help this emergency request
+            {walletAddress 
+              ? `Connected: ${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`
+              : "Your donation will be sent directly to help this emergency request"}
           </p>
         </div>
       </div>
