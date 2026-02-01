@@ -41,7 +41,48 @@ To see the full capabilities (P2P Sync & Cross-device), please follow these step
 * Ngrok Account (Free tier is fine)
 
 ### Step 1: Clone & Install
-```bash
+Bash
+```
 git clone [https://github.com/your-username/relief-mesh.git](https://github.com/your-username/relief-mesh.git)
 cd relief-mesh
 npm install
+```
+Step 2: Start the Relay Server (Terminal 1)
+This acts as a "superpeer" to help sync data between devices during the demo.
+
+Bash
+```
+node relay.cjs
+# Output: ✅ Local Relay started on port 8765
+Step 3: Expose Relay to Internet (Terminal 2)
+Required for mobile devices to connect to your local computer.
+```
+Bash
+```
+npx ngrok http 8765
+Important: Copy the https://....ngrok-free.app URL and update src/hooks/useRelief.ts with this new link.
+```
+Step 4: Run the Frontend (Terminal 3)
+Bash
+```
+npm run dev
+Desktop: Open http://localhost:5173
+```
+Mobile: Use the Network URL shown in the terminal (e.g., https://192.168.1.x:5173) or use Tailscale Funnel / Ngrok for port 5173.
+
+🧪 How to Test
+1. P2P Sync Demo
+Open the app on Desktop and Mobile.
+
+On Mobile, click the SOS Button and submit a request.
+
+Watch the Desktop Map update instantly without refreshing!
+
+2. Donation Demo (Sepolia)
+Click on any SOS Pin on the map.
+
+Click "Connect Wallet" (Supports MetaMask).
+
+The app will automatically switch you to Sepolia Testnet.
+
+Click "Donate 0.001 ETH" to simulate a transaction.
