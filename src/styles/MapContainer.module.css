@@ -7,40 +7,29 @@
   bottom: 0;
   width: 100%;
   height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   z-index: 1;
 }
 
-/* Map Grid Overlay - Simulated map appearance */
+:global(.leaflet-container) {
+  width: 100%;
+  height: 100%;
+  background: #f0f0f0; /* สีสำรองระหว่างรอแผนที่โหลด */
+}
+
+/* --- 1. ส่วน Grid และ Tile ปลอม (ลบออกหรือคอมเมนต์) --- */
 .mapGrid {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-image: 
-    linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
-  background-size: 50px 50px;
-  opacity: 0.5;
+  display: none; /* ปิดการแสดงผลไปเลย */
 }
 
 .mapTile {
-  width: 100%;
-  height: 100%;
-  background: 
-    radial-gradient(circle at 30% 40%, rgba(102, 126, 234, 0.3) 0%, transparent 50%),
-    radial-gradient(circle at 70% 60%, rgba(118, 75, 162, 0.3) 0%, transparent 50%);
+  display: none; /* ปิดการแสดงผลไปเลย */
 }
 
-/* Pins Container */
+/* --- 2. ส่วน Pins เดิม (ถ้าจะใช้ Marker ของ Leaflet ให้ปิดอันนี้ด้วย) --- */
 .pinsContainer {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 2;
+  display: none; 
+  /* เพราะถ้าเปิดไว้ มันจะลอยทับแผนที่และรับ Event เมาส์ไปหมด */
+  /* ทำให้เราคลิกเลื่อนแผนที่ข้างหลังไม่ได้ครับ */
 }
 
 /* Emergency Pin */
