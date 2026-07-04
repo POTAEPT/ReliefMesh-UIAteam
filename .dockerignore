@@ -1,0 +1,24 @@
+# --- .dockerignore ---
+
+# 1. ข้าม Dependencies เพราะเราจะไป npm install ใหม่ข้างใน Container เสมอ
+node_modules
+npm-debug.log*
+
+# 2. ข้ามไฟล์ที่ Build แล้ว (เผื่อมี)
+dist
+build
+
+# 3. Security: ห้ามเอาไฟล์รหัสผ่านความลับเข้า Image เด็ดขาด!
+.env
+.env.*
+*.pem
+
+# 4. ข้ามไฟล์ System และ Git
+.git
+.gitignore
+.vscode
+.DS_Store
+
+# 5. ข้ามไฟล์ Docker เอง
+Dockerfile
+.dockerignore
