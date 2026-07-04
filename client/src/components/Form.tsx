@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react';
+import {v4 as uuidv4 } from 'uuid';
 
 export default function EmergencyForm(){
 
@@ -9,7 +10,7 @@ export default function EmergencyForm(){
         e.preventDefault(); 
 
         const payload = {
-            i: crypto.randomUUID().slice(0, 8), 
+            i: uuidv4(), 
             t: 1, // Mock: ประเภทเหตุฉุกเฉิน (เช่น 1 = การแพทย์)
             a: 18.795, // Mock: ละติจูด 
             o: 98.968, // Mock: ลองจิจูด
@@ -17,7 +18,7 @@ export default function EmergencyForm(){
         };
 
         try {
-            const response = await fetch('http://localhost:3000/api/emergency', {
+            const response = await fetch('http://192.168.4.2:3000/api/emergency', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'

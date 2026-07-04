@@ -38,7 +38,7 @@ server.post('/api/emergency', async (request, reply) => {
     });
 
   } catch (error) {
-    server.log.error('Database Error:', error);
+    server.log.error(error as Error,'Database Error:');
     return reply.status(500).send({ error: 'Internal Server Error' });
   }
 });
