@@ -31,9 +31,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onViewRequest }) =
     document.body.style.cursor = 'grabbing';
   };
 
-  // --- ฟังก์ชัน Submit (แก้ให้ส่งเข้า Gun) ---
-  const handleSOSSubmit = (data: { needs: string[]; details: string; location: string; lat: number; lng: number }) => {
-    // ส่งข้อมูลเข้า P2P Network
+  // --- ฟังก์ชัน Submit ---
+const handleSOSSubmit = (data: { type_id: number; message: string; node_id: string }) => {
     sendSOS(data);
     setIsSOSModalOpen(false);
   };

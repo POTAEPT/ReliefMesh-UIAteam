@@ -4,8 +4,8 @@ import styles from '../styles/SOSModal.module.css';
 
 interface SOSModalProps {
   onClose: () => void;
-  // อัปเดต interface ให้รับ lat, lng
-  onSubmit: (data: { needs: string[]; details: string; location: string; lat: number; lng: number }) => void;
+  // อัปเดต Interface ให้ตรงกับ Backend
+  onSubmit: (data: { type_id: number; message: string; node_id: string }) => void;
 }
 
 const availableNeeds = [
@@ -16,29 +16,14 @@ const availableNeeds = [
 export const SOSModal: React.FC<SOSModalProps> = ({ onClose, onSubmit }) => {
   const [selectedNeeds, setSelectedNeeds] = useState<string[]>([]);
   const [details, setDetails] = useState('');
-  const [currentLocation, setCurrentLocation] = useState('กำลังค้นหาพิกัด GPS...');
-  // เพิ่ม state เก็บค่าพิกัดจริง
-  const [coords, setCoords] = useState<{lat: number, lng: number} | null>(null);
+  const [nodeId, setNodeId] = useState<string>('UNKNOWN');
 
   useEffect(() => {
-    // ใช้ Browser Geolocation API
-    if ("geolocation" in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords;
-          setCoords({ lat: latitude, lng: longitude });
-          setCurrentLocation(`${latitude.toFixed(6)}, ${longitude.toFixed(6)}`);
-        },
-        (error) => {
-          console.error("Location Error:", error);
-          setCurrentLocation("ไม่สามารถระบุตำแหน่งได้ (ใช้พิกัดจำลอง)");
-          // Fallback location (เช่น อนุสาวรีย์ชัยฯ) เพื่อไม่ให้แอปพังตอนเดโม
-          setCoords({ lat: 13.7649, lng: 100.5383 });
-        },
-        { enableHighAccuracy: true }
-      );
-    } else {
-      setCurrentLocation("Browser ไม่รองรับ GPS");
+    // ลอจิกใหม่: ดึง node_id จาก URL (เช่น http://192.168.4.1/?node_id=NODE-CAMT-Floor1)
+    const params = new URLSearchParams(window.location.search);
+    const idFromUrl = params.get('node_id');
+    if (idFromUrl) {
+      setNodeId(idFromUrl);
     }
   }, []);
 
@@ -55,15 +40,13 @@ export const SOSModal: React.FC<SOSModalProps> = ({ onClose, onSubmit }) => {
       return;
     }
     
-    // ใช้พิกัดจริง หรือ Fallback
-    const finalCoords = coords || { lat: 13.7563, lng: 100.5018 };
+    // จำลองการแปลงหมวดหมู่ (Need) ให้เป็นตัวเลข (type_id) เพื่อส่งเข้า Database
+    const typeId = availableNeeds.indexOf(selectedNeeds[0]) + 1; 
 
     onSubmit({ 
-      needs: selectedNeeds, 
-      details, 
-      location: currentLocation,
-      lat: finalCoords.lat,
-      lng: finalCoords.lng
+      type_id: typeId, 
+      message: details || selectedNeeds.join(', '), // ถ้าไม่ได้พิมพ์ Detail ให้เอา Need มาใส่แทน
+      node_id: nodeId
     });
   };
 
@@ -112,13 +95,15 @@ export const SOSModal: React.FC<SOSModalProps> = ({ onClose, onSubmit }) => {
 
           <div className={styles.formSection}>
             <label className={styles.sectionLabel}>Your Location</label>
+            {/* โชว์ชื่อ Node ID (เช่น NODE-CAMT-Floor1) ให้ผู้ใช้รู้ว่ากำลังเกาะเสาไหนอยู่ */}
             <div className={styles.locationDisplay}>
               <MapPin size={20} color="#E63946" />
-              <span className={styles.locationText}>{currentLocation}</span>
+              <span className={styles.locationText}>{nodeId}</span>
             </div>
           </div>
 
-          <button type="submit" className={styles.submitButton} disabled={selectedNeeds.length === 0 || !coords}>
+          {/* กู้คืนปุ่ม Submit พร้อมลอจิกป้องกันการกดปุ่มถ้ายังไม่เลือก Needs */}
+          <button type="submit" className={styles.submitButton} disabled={selectedNeeds.length === 0}>
             <Send size={20} color="#FFFFFF" />
             <span>Broadcast Emergency Request</span>
           </button>
