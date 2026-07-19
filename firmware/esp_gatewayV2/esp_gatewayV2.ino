@@ -102,7 +102,7 @@ void setup() {
     M5.Lcd.printf("Gateway IP: %s\n", WiFi.softAPIP().toString().c_str());
     
     // ⚠️ ใช้ IP โน้ตบุ๊ก (192.168.4.2) และพอร์ตใหม่ (3001) ให้ตรงกับ Backend
-    serverUrl = "http://192.168.4.2:3001/api/emergency"; 
+    serverUrl = "http://192.168.4.2:3000/api/emergency"; 
   }
 
   if (esp_now_init() != ESP_OK) {

@@ -34,22 +34,25 @@ const char index_html[] PROGMEM = R"rawliteral(
     body { font-family: Arial; padding: 20px; background: #f4f4f4; }
     .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
     h2 { color: #E63946; }
-    select, input, button { width: 100%; padding: 10px; margin-top: 10px; border-radius: 4px; border: 1px solid #ccc; }
+    input[type="text"], button { width: 100%; padding: 10px; margin-top: 10px; border-radius: 4px; border: 1px solid #ccc; box-sizing: border-box; }
     button { background: #E63946; color: white; border: none; font-weight: bold; cursor: pointer; }
+    .checkbox-group { margin-top: 10px; margin-bottom: 15px; }
+    .checkbox-group label { display: block; padding: 8px 0; border-bottom: 1px solid #eee; }
   </style>
 </head>
 <body>
   <div class="card">
     <h2>Send Emergency SOS</h2>
     <form action="/submit" method="POST">
-      <label>What do you need?</label>
-      <select name="type_id">
-        <option value="1">Water</option>
-        <option value="2">Food</option>
-        <option value="4">Medical Aid</option>
-        <option value="5">Rescue/Evacuation</option>
-      </select>
-      <label>Details:</label>
+      <label><b>What do you need? (Select multiple)</b></label>
+      <div class="checkbox-group">
+        <label><input type="checkbox" name="type_id" value="1"> Water</label>
+        <label><input type="checkbox" name="type_id" value="2"> Food</label>
+        <label><input type="checkbox" name="type_id" value="4"> Medical Aid</label>
+        <label><input type="checkbox" name="type_id" value="5"> Rescue / Evacuation</label>
+      </div>
+      
+      <label><b>Details:</b></label>
       <input type="text" name="message" placeholder="Describe situation...">
       <button type="submit">Broadcast SOS</button>
     </form>
@@ -88,23 +91,37 @@ void setupWebServer() {
 
   // รับข้อมูลตอนกด Submit
   server.on("/submit", HTTP_POST, []() {
-    int typeId = server.arg("type_id").toInt();
-    String message = server.arg("message");
-
-    // แพ็กข้อมูลลง JSON
-    StaticJsonDocument<200> doc;
-    doc["type_id"] = typeId;
-    doc["message"] = message;
-    doc["node_id"] = NODE_ID;
-    
-    char payload[200];
-    serializeJson(doc, payload);
-
-    // ยิงคลื่นวิทยุส่งไปหา Gateway
-    esp_err_t result = esp_now_send(gatewayMacAddress, (uint8_t *)payload, strlen(payload));
-    
-    server.send(200, "text/html", "<h2>SOS Sent! Help is on the way.</h2>");
-  });
+      String message = server.arg("message");
+  
+      // ขยายขนาด JSON Document เผื่อข้อมูล Array (จาก 200 เป็น 300)
+      StaticJsonDocument<300> doc;
+      
+      // สร้าง Array รอรับค่า type_id หลายๆ อัน
+      JsonArray typeIds = doc.createNestedArray("type_id");
+      
+      // วนลูปอ่านค่า Argument ทั้งหมดที่ส่งเข้ามาใน HTTP POST
+      for (int i = 0; i < server.args(); i++) {
+        if (server.argName(i) == "type_id") {
+          // ถ้าเจอชื่อ type_id ให้จับค่ายัดลง Array
+          typeIds.add(server.arg(i).toInt());
+        }
+      }
+  
+      // กันเหนียว: ถ้าผู้ใช้ไม่ได้ติ๊กอะไรมาเลย ให้ส่งค่า 0 (Other) ไปแทน
+      if (typeIds.size() == 0) {
+        typeIds.add(0);
+      }
+  
+      doc["message"] = message;
+      doc["node_id"] = NODE_ID;
+      
+      char payload[300];
+      serializeJson(doc, payload);
+  
+      esp_err_t result = esp_now_send(gatewayMacAddress, (uint8_t *)payload, strlen(payload));
+      
+      server.send(200, "text/html", "<h2>SOS Sent! Help is on the way.</h2>");
+    });
 
   server.begin();
 }

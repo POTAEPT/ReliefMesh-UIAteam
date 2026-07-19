@@ -32,7 +32,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onViewRequest }) =
   };
 
   // --- ฟังก์ชัน Submit ---
-const handleSOSSubmit = (data: { type_id: number; message: string; node_id: string }) => {
+const handleSOSSubmit = (data: { type_id: number[]; message: string; node_id: string }) => {
     sendSOS(data);
     setIsSOSModalOpen(false);
   };

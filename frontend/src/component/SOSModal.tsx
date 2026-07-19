@@ -5,7 +5,7 @@ import styles from '../styles/SOSModal.module.css';
 interface SOSModalProps {
   onClose: () => void;
   // อัปเดต Interface ให้ตรงกับ Backend
-  onSubmit: (data: { type_id: number; message: string; node_id: string }) => void;
+  onSubmit: (data: { type_id: number[]; message: string; node_id: string }) => void;
 }
 
 const availableNeeds = [
@@ -34,20 +34,21 @@ export const SOSModal: React.FC<SOSModalProps> = ({ onClose, onSubmit }) => {
   };
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (selectedNeeds.length === 0) {
-      alert('Please select at least one need');
-      return;
-    }
+      e.preventDefault();
+      if (selectedNeeds.length === 0) {
+        alert('Please select at least one need');
+        return;
+      }
+      
+      // 🔴 ลอจิกใหม่: วนลูป (map) เอาชื่อ Need ทุกอันที่เลือก ไปแปลงเป็น Index + 1 
+      // เช่น เลือก ['Water', 'Food'] จะกลายเป็น [1, 2]
+      const typeIds = selectedNeeds.map(need => availableNeeds.indexOf(need) + 1);
     
-    // จำลองการแปลงหมวดหมู่ (Need) ให้เป็นตัวเลข (type_id) เพื่อส่งเข้า Database
-    const typeId = availableNeeds.indexOf(selectedNeeds[0]) + 1; 
-
-    onSubmit({ 
-      type_id: typeId, 
-      message: details || selectedNeeds.join(', '), // ถ้าไม่ได้พิมพ์ Detail ให้เอา Need มาใส่แทน
-      node_id: nodeId
-    });
+      onSubmit({ 
+        type_id: typeIds, // ส่งเป็น Array ไปเลย
+        message: details || selectedNeeds.join(', '), 
+        node_id: nodeId
+      });
   };
 
   return (
