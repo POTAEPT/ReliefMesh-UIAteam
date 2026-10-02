@@ -21,7 +21,7 @@ M5Core2 Gateway ── HTTP POST ──▶ Fastify API ──▶ PostgreSQL
                                                                             └── HTTP GET ◀── React dashboard
 ```
 
-### อธิบายสำหรับคนทั่วไป
+### Diagram
 
 ```mermaid
 flowchart LR
