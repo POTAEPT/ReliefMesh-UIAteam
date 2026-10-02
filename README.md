@@ -21,6 +21,30 @@ M5Core2 Gateway ── HTTP POST ──▶ Fastify API ──▶ PostgreSQL
                                                                             └── HTTP GET ◀── React dashboard
 ```
 
+### อธิบายสำหรับคนทั่วไป
+
+```mermaid
+flowchart LR
+    A[ผู้ประสบภัย<br/>กดส่ง SOS] --> B[โหนดใกล้ตัว<br/>รับข้อความผ่าน Wi-Fi]
+    B --> C[ส่งต่อระยะใกล้<br/>ด้วย ESP-NOW]
+    C --> D[Gateway<br/>รวบรวมข้อมูล]
+    D --> E[ระบบกลาง<br/>บันทึกคำขอ]
+    E --> F[เจ้าหน้าที่และอาสาสมัคร<br/>เห็น SOS บนแผนที่]
+    F --> G[เข้าดูรายละเอียด<br/>และช่วยเหลือผู้ประสบภัย]
+
+    classDef person fill:#fff4e5,stroke:#e07a1f,color:#3d2412
+    classDef device fill:#e8f5e9,stroke:#2e7d32,color:#173b1a
+    classDef system fill:#e8f0fe,stroke:#356ac3,color:#162d52
+    classDef action fill:#fdecec,stroke:#d64545,color:#4a1717
+
+    class A,F person
+    class B,C,D device
+    class E system
+    class G action
+```
+
+สรุปสั้น ๆ: **ผู้ประสบภัยส่งสัญญาณ → อุปกรณ์ช่วยส่งต่อ → ระบบบันทึกข้อมูล → เจ้าหน้าที่เห็นจุดขอความช่วยเหลือ → ทีมเข้าไปช่วยเหลือ**
+
 ## ความสามารถปัจจุบัน
 
 - ส่ง SOS พร้อมเลือกความต้องการได้หลายรายการ
